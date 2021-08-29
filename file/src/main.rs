@@ -1,3 +1,4 @@
+// vim: ts=4 sw=4 et autoindent backspace=indent,eol,start ruler showcmd
 extern crate tokio;
 
 use tokio::prelude::{AsyncWrite, Future};
@@ -11,4 +12,5 @@ fn main() {
         }).map_err(|err| eprintln!("IO error: {:?}", err));
 
     tokio::run(task);
+
 }
