@@ -2,13 +2,23 @@ use warp::{self, Filter};
 
 use console::Style;
 use futures::future::join_all;
-use std::marker::Unpin;
+//use std::marker::Unpin;
 use std::pin::Pin;
+use std::net::SocketAddr;
 
 mod listener;
 
+mod settings;
+use settings::settings::Settings;
+
 #[tokio::main]
 async fn main() {
+    let conf = Settings::new()
+        .expect("Oh no, got an Err!");
+    println!("settings is {:#?}", conf);
+    println!("http server is {:#?}", conf.http_server[0]);
+    println!("log level is {}", conf.log_level);
+
     let target: String = "0.0.0.0:8000".parse().unwrap();
     let green = Style::new().green();
     let cyan = Style::new().cyan();
@@ -33,6 +43,16 @@ async fn main() {
         .cert_path("tls/cert.pem")
         .key_path("tls/key2.rsa")
         .run(([0, 0, 0, 0], 8001));
+
+    for srv_obj in conf.http_server.iter() {
+        let socket: SocketAddr = srv_obj.addr
+            .parse()
+            .expect("Unable to parse socket address");
+
+        let srv_init = warp::serve(router.clone())
+            .run((socket));
+        fut.push(Box::pin(srv_init));
+    }
 
     fut.push(Box::pin(srv_1));
     fut.push(Box::pin(srv_2));
