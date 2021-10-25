@@ -1,5 +1,32 @@
 log_level: 0
-http_server:
-- port: 8080
-  tls: 0
-  addr: 127.0.0.1:8080
+server:
+- addr: 127.0.0.1:8080
+  proto: http
+  tls:
+    certificate: ""
+    key: ""
+- addr: 127.0.0.1:8443
+  proto: http
+  tls: 
+    certificate: tls/cert.pem
+    key: tls/key2.rsa
+- addr: 127.0.0.1:6999
+  proto: tcp
+  tls: 
+    certificate: ""
+    key: ""
+- addr: 127.0.0.1:9666
+  proto: tcp
+  tls: 
+    certificate: "tls/cert.pem"
+    key: "tls/key2.rsa"
+- addr: 127.0.0.1:16999
+  proto: udp
+  tls: 
+    certificate: ""
+    key: ""
+- addr: 127.0.0.1:19666
+  proto: udp
+  tls: 
+    certificate: "tls/cert.pem"
+    key: "tls/key2.rsa"

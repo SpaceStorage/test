@@ -3,16 +3,22 @@ use config::{ConfigError, Config, File, Environment};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+pub struct TLSSettings {
+    pub certificate: String,
+    pub key: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct HTTPserverSettings {
     pub addr: String,
-    pub port: u32,
-    pub tls: u8,
+    pub tls: TLSSettings,
+    pub proto: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub log_level: u8,
-    pub http_server: Vec<HTTPserverSettings>,
+    pub server: Vec<HTTPserverSettings>,
 }
 
 impl Settings {
@@ -23,6 +29,8 @@ impl Settings {
         s.merge(File::with_name("etc/defaults"))?;
         s.merge(File::with_name(&*config_path).required(false))?;
         s.merge(Environment::with_prefix("spacestorage"))?;
+
+        println!("debug: {:?}", s.get::<Vec<HTTPserverSettings>>("server"));
 
         s.try_into()
     }

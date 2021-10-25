@@ -14,47 +14,66 @@ use settings::settings::Settings;
 #[tokio::main]
 async fn main() {
     let conf = Settings::new()
-        .expect("Oh no, got an Err!");
+        .expect("Config parse error");
     println!("settings is {:#?}", conf);
-    println!("http server is {:#?}", conf.http_server[0]);
-    println!("log level is {}", conf.log_level);
 
-    let target: String = "0.0.0.0:8000".parse().unwrap();
+    let bold = Style::new().bold();
     let green = Style::new().green();
     let cyan = Style::new().cyan();
+    let red = Style::new().red();
+    let magenta = Style::new().magenta();
 
     let health = listener::router::health::router()
         .and_then(listener::router::health::handler).with(warp::log("health"));
     let dummy = listener::router::dummy::router()
         .and_then(listener::router::dummy::handler).with(warp::log("dummy"));
 
-    println!("HTTP server at {}", green.apply_to(&target));
-    println!("Rust inside, warp HTTP server");
-
     let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
     let router = health
         .or(dummy);
 
-    let srv_1 = warp::serve(router.clone())
-        .run(([0, 0, 0, 0], 8000));
+    for srv_obj in conf.server.iter() {
 
-    let srv_2 = warp::serve(router.clone())
-        .tls()
-        .cert_path("tls/cert.pem")
-        .key_path("tls/key2.rsa")
-        .run(([0, 0, 0, 0], 8001));
+        if srv_obj.proto == "http" {
+            let socket: SocketAddr = srv_obj.addr
+                .parse()
+                .expect("Unable to parse socket address");
 
-    for srv_obj in conf.http_server.iter() {
-        let socket: SocketAddr = srv_obj.addr
-            .parse()
-            .expect("Unable to parse socket address");
-
-        let srv_init = warp::serve(router.clone())
-            .run((socket));
-        fut.push(Box::pin(srv_init));
+            if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
+                let srv_init = warp::serve(router.clone())
+                    .tls()
+                    .cert_path(&srv_obj.tls.certificate)
+                    .key_path(&srv_obj.tls.key)
+                    .run(socket);
+                fut.push(Box::pin(srv_init));
+                println!("Rust inside, warp HTTPs server at {}", bold.apply_to(green.apply_to(&srv_obj.addr)));
+            } else {
+                let srv_init = warp::serve(router.clone())
+                    .run(socket);
+                fut.push(Box::pin(srv_init));
+                println!("Rust inside, warp HTTP server at {}", bold.apply_to(cyan.apply_to(&srv_obj.addr)));
+            }
+        } else if srv_obj.proto == "tcp" {
+            //listener::tcp::server::run(srv_obj.addr.clone());
+            let srv_init = listener::tcp::server::run(srv_obj.addr.clone());
+            if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
+                println!("Rust inside, Tokio TLS server at {}", green.apply_to(&srv_obj.addr));
+            } else {
+                println!("Rust inside, Tokio TCP server at {}", cyan.apply_to(&srv_obj.addr));
+            }
+            fut.push(Box::pin(srv_init));
+        } else if srv_obj.proto == "udp" {
+            let srv_init = listener::udp::server::server_run(srv_obj.addr.clone());
+            if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
+                println!("Rust inside, Tokio DTLS server at {}", magenta.apply_to(&srv_obj.addr));
+            } else {
+                println!("Rust inside, Tokio UDP server at {}", red.apply_to(&srv_obj.addr));
+            }
+            fut.push(Box::pin(srv_init));
+        }
     }
 
-    fut.push(Box::pin(srv_1));
-    fut.push(Box::pin(srv_2));
+    //fut.push(Box::pin(srv_1));
+    //fut.push(Box::pin(srv_2));
     join_all(fut).await;
 }
