@@ -55,13 +55,15 @@ async fn main() {
             }
         } else if srv_obj.proto == "tcp" {
             //listener::tcp::server::run(srv_obj.addr.clone());
-            let srv_init = listener::tcp::server::run(srv_obj.addr.clone());
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
+                let srv_init = listener::tcp::tls::run(srv_obj.addr.clone(), srv_obj.tls.certificate.clone(), srv_obj.tls.key.clone());
+                fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio TLS server at {}", green.apply_to(&srv_obj.addr));
             } else {
+                let srv_init = listener::tcp::server::run(srv_obj.addr.clone());
+                fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio TCP server at {}", cyan.apply_to(&srv_obj.addr));
             }
-            fut.push(Box::pin(srv_init));
         } else if srv_obj.proto == "udp" {
             let srv_init = listener::udp::server::server_run(srv_obj.addr.clone());
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
