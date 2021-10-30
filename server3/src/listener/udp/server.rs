@@ -21,7 +21,7 @@ impl Server {
             if let Some((size, peer)) = to_send {
                 let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
 
-                println!("UDP Echoed '{}' {}/{} bytes to {}", String::from_utf8(buf.to_vec()).unwrap(), amt, size, peer);
+                println!("UDP Echoed {}/{} bytes to {}", amt, size, peer);
 
                 handler::run(&buf).await;
             }
