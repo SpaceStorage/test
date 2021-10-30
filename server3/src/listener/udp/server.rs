@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::{io};
 use tokio::net::UdpSocket;
+#[path = "../../handler/call/interface.rs"] mod handler;
 
 struct Server {
     socket: UdpSocket,
@@ -21,6 +22,8 @@ impl Server {
                 let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
 
                 println!("UDP Echoed '{}' {}/{} bytes to {}", String::from_utf8(buf.to_vec()).unwrap(), amt, size, peer);
+
+                handler::run(&buf).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());

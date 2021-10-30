@@ -7,6 +7,7 @@ use std::pin::Pin;
 use std::net::SocketAddr;
 
 mod listener;
+mod fs;
 
 mod settings;
 use settings::settings::Settings;
@@ -76,7 +77,5 @@ async fn main() {
         }
     }
 
-    //fut.push(Box::pin(srv_1));
-    //fut.push(Box::pin(srv_2));
     join_all(fut).await;
 }
