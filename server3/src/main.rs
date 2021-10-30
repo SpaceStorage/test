@@ -70,7 +70,7 @@ async fn main() {
                 println!("Rust inside, Tokio DTLS server at {}", magenta.apply_to(&srv_obj.addr));
                 println!("Erorr: spacestorage now not support DTLS, port not listening");
             } else {
-                let srv_init = listener::udp::server::server_run(srv_obj.addr.clone());
+                let srv_init = listener::udp::server::server_run(srv_obj.addr.clone(), srv_obj.buffer_size);
                 fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio UDP server at {}", red.apply_to(&srv_obj.addr));
             }

@@ -31,12 +31,12 @@ impl Server {
     }
 }
 
-pub async fn server_run(addr: String) -> () {
+pub async fn server_run(addr: String, size: usize) -> () {
     let socket = UdpSocket::bind(&addr).await.unwrap();
 
     let server = Server {
         socket,
-        buf: vec![0; 1024],
+        buf: vec![0; size],
         to_send: None,
     };
 

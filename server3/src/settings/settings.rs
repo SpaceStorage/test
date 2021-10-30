@@ -13,6 +13,7 @@ pub struct HTTPserverSettings {
     pub addr: String,
     pub tls: TLSSettings,
     pub proto: String,
+    pub buffer_size: usize,
 }
 
 #[derive(Debug, Deserialize)]
