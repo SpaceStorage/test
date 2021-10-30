@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate lazy_static;
 use warp::{self, Filter};
 
 use console::Style;
@@ -11,6 +13,8 @@ mod fs;
 
 mod settings;
 use settings::settings::Settings;
+
+mod util;
 
 #[tokio::main]
 async fn main() {
