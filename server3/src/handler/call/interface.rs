@@ -8,14 +8,28 @@ pub async fn run(data: &[u8]) -> &[u8] {
     let newline : &[u8] = &[0x0a];
     let res:Vec<u8> = [data, newline].concat();
 
-    GLOBAL.buffer.get("1");
-    GLOBAL.insert("1".to_string(), res.clone());
-    let write_op = write::write_bytes(&res);
+    let mut hm = GLOBAL.lock().unwrap();
+    let buf = hm.buffer.get("1");
+    if buf == Option::None {
+        hm.insert("1".to_string(), res.clone());
+        return "ok".as_bytes();
+    }
 
-    let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
-    fut.push(Box::pin(write_op));
+    let data = buf.unwrap();
 
-    join_all(fut).await;
+    println!("data len is {}", data.len());
+    if data.len() >= hm.buffer_size {
+        println!("data len is {}, write!", data.len());
+        let write_op = write::write_bytes(&data);
+        let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
+        fut.push(Box::pin(write_op));
+
+        join_all(fut).await;
+        hm.buffer.clear();
+    } else {
+        hm.insert("1".to_string(), res.clone());
+    }
+
 
     return "ok".as_bytes();
 }
