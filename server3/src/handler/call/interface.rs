@@ -25,7 +25,7 @@ pub async fn run(data: &[u8]) -> &[u8] {
     print_type_of(&bufdata);
 
     println!("bufdata len is {}, capacity is {}", bufdata.len(), bufdata.capacity());
-    if bufdata.len() >= 100000 {
+    if bufdata.len() >= 1000000 {
         println!("bufdata len is {}, write!", bufdata.len());
         let write_op = write::write_bytes(&bufdata);
         let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
