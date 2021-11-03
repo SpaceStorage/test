@@ -19,11 +19,11 @@ impl Server {
 
         loop {
             if let Some((size, peer)) = to_send {
-                let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
+                //let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
 
-                println!("UDP Echoed {}/{} bytes to {}", amt, size, peer);
+                println!("UDP Echoed {} bytes to {}", size, peer);
 
-                handler::run(&buf).await;
+                handler::run(&buf[..size]).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());

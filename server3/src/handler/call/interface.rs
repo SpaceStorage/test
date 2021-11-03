@@ -14,8 +14,8 @@ pub async fn run(data: &[u8]) -> &[u8] {
 
     let mut hm = GLOBAL.lock().unwrap();
     let buf = hm.buffer.get_mut("1");
+    println!("res len is {}", res.len());
     if buf == Option::None {
-        println!("res len is {}", res.len());
         hm.insert("1".to_string(), res.clone());
         return "ok".as_bytes();
     }
