@@ -1,9 +1,9 @@
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-//use tokio::io::copy;
 use std::process;
 use thread_id;
 use std::{thread, time};
+use crate::util::global::{GLOBAL};
 
 pub async fn run(addr: String) {
     let listener = TcpListener::bind(&addr).await.unwrap();
@@ -35,6 +35,10 @@ pub async fn run(addr: String) {
                 if let Err(e) = socket.write_all(&buf[0..n]).await {
                     eprintln!("failed to write to socket; err = {:?}", e);
                     return;
+                }
+
+                if let Ok(slb) = GLOBAL.lock() {
+                    slb.metrics_tree.access.with_label_values(&["global", "global", "tcp"]).inc();
                 }
             }
         });

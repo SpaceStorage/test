@@ -19,7 +19,7 @@ serde = { version = "1.0.130", features = ["derive"] }
 rustls-pemfile = { version = "0.2.1" }
 tokio-rustls = { version = "0.23.0" }
 lazy_static = { version = "1.4.0" }
-zstd = "0.9"
+prometheus = { version = "0.13.0" }
 
 [package.metadata.rpm]
 package = "server"

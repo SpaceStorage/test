@@ -7,6 +7,7 @@ use tokio::io::{copy, sink, split, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::rustls::{self, Certificate, PrivateKey};
 use tokio_rustls::TlsAcceptor;
+use crate::util::global::{GLOBAL};
 
 fn load_certs(path: &Path) -> io::Result<Vec<Certificate>> {
     certs(&mut BufReader::new(File::open(path)?))
@@ -48,6 +49,10 @@ pub async fn run(addr: String, cert: String, key: String) {
     loop {
         let (stream, peer_addr) = listener.accept().await.unwrap();
         let acceptor = acceptor.clone();
+
+        if let Ok(slb) = GLOBAL.lock() {
+            slb.metrics_tree.access.with_label_values(&["global", "global", "tls"]).inc();
+        }
 
         let fut = async move {
             let mut stream = acceptor.accept(stream).await.unwrap();

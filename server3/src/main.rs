@@ -10,17 +10,27 @@ use std::net::SocketAddr;
 
 mod listener;
 mod fs;
+mod metrics;
 
 mod settings;
 use settings::settings::Settings;
 
 mod util;
+mod handler;
 
 #[tokio::main]
 async fn main() {
     let conf = Settings::new()
         .expect("Config parse error");
     println!("settings is {:#?}", conf);
+
+    // initialize metrics
+    //let mut metrics_tree = metrics::prometheus::Prometheus::new();
+
+    //metrics_tree.access.with_label_values(&["myproj", "select"]).inc();
+    //metrics_tree.response_time.with_label_values(&["myproj", "select", "0.5"]).set(0.3);
+    //let mut metrics_str = metrics_tree.get_metrics();
+    //println!("{}", String::from_utf8(metrics_str).unwrap());
 
     let bold = Style::new().bold();
     let green = Style::new().green();
@@ -32,9 +42,12 @@ async fn main() {
         .and_then(listener::router::health::handler).with(warp::log("health"));
     let dummy = listener::router::dummy::router()
         .and_then(listener::router::dummy::handler).with(warp::log("dummy"));
+    let openmetrics = listener::router::openmetrics::router()
+        .and_then(listener::router::openmetrics::handler).with(warp::log("openmetrics"));
 
     let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
     let router = health
+        .or(openmetrics)
         .or(dummy);
 
     for srv_obj in conf.server.iter() {

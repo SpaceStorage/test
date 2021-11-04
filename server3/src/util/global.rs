@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+use crate::metrics::prometheus;
+
 pub struct SpaceLocalBuffer {
     pub buffer: HashMap<String, Vec<u8>>,
     pub buffer_size: usize,
+    pub metrics_tree: prometheus::Prometheus,
 }
 
 impl SpaceLocalBuffer {
@@ -11,6 +14,7 @@ impl SpaceLocalBuffer {
         return SpaceLocalBuffer {
             buffer: HashMap::new(),
             buffer_size: 1000000,
+            metrics_tree: prometheus::Prometheus::new(),
         };
     }
 
