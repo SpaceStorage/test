@@ -22,14 +22,9 @@ impl Server {
             if let Some((size, peer)) = to_send {
                 //let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
 
-                if let Ok(mut slb) = GLOBAL.lock() {
+                if let Ok(slb) = GLOBAL.lock() {
                     slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
                     slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
-
-                    println!("lock ok");
-                    let metrics_str = slb.metrics_tree.get_metrics();
-                    let ret_string = String::from_utf8(metrics_str).unwrap();
-                    println!("metrics is {}", ret_string);
                 }
 
                 println!("UDP Echoed {} bytes to {}", size, peer);

@@ -13,14 +13,14 @@ pub async fn run(data: &[u8]) -> &[u8] {
 
     if let Ok(mut slb) = GLOBAL.lock() {
         let buf = slb.buffer.get_mut("1");
-        println!("res len is {}", res.len());
+        //println!("res len is {}", res.len());
         if buf == Option::None {
             slb.insert("1".to_string(), res.clone());
             return "ok".as_bytes();
         }
 
         let bufdata = buf.unwrap();
-        print_type_of(&bufdata);
+        //print_type_of(&bufdata);
 
         println!("bufdata len is {}, capacity is {}", bufdata.len(), bufdata.capacity());
         if bufdata.len() >= 1000000 {
