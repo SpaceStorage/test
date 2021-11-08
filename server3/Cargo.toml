@@ -21,6 +21,7 @@ tokio-rustls = { version = "0.23.0" }
 lazy_static = { version = "1.4.0" }
 prometheus = { version = "0.13.0" }
 syslog_loose = { version = "0.15.0" }
+socket2 = { version = "0.3.19" }
 
 [package.metadata.rpm]
 package = "server"
