@@ -19,10 +19,8 @@ pub fn router() -> BoxedFilter<()> {
 pub async fn handler() -> Result<impl warp::Reply, warp::Rejection> {
     let mut ret_string = "".to_string();
     //if let Ok(mut slb) = GLOBAL.lock() {
-    println!("get global lock");
     match GLOBAL.lock() {
         Ok(mut slb) => {
-            println!("uraa");
             slb.metrics_tree.access.with_label_values(&["global", "global", "openmetrics"]).inc();
             //slb.metrics_tree.response_time.with_label_values(&["myproj", "select", "0.5"]).set(0.3);
             let metrics_str = slb.metrics_tree.get_metrics();

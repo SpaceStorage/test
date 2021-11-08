@@ -27,7 +27,7 @@ impl Server {
                     slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
                 }
 
-                println!("UDP Echoed {} bytes to {}", size, peer);
+                //println!("UDP Echoed {} bytes to {}: {:?}", size, peer, std::str::from_utf8(&buf[..size]));
 
                 interface::run(&buf[..size]).await;
             }

@@ -4,13 +4,18 @@ use warp::{self, Filter};
 
 use console::Style;
 use futures::future::join_all;
-//use std::marker::Unpin;
 use std::pin::Pin;
 use std::net::SocketAddr;
+use std::fs::create_dir_all;
+use std::path::Path;
+use std::env;
+use std::io;
 
 mod listener;
 mod fs;
+mod metafs;
 mod metrics;
+mod parser;
 
 mod settings;
 use settings::settings::Settings;
@@ -23,6 +28,8 @@ async fn main() {
     let conf = Settings::new()
         .expect("Config parse error");
     println!("settings is {:#?}", conf);
+
+    set_path(conf.root_path).unwrap();
 
     // initialize metrics
     //let mut metrics_tree = metrics::prometheus::Prometheus::new();
@@ -95,4 +102,20 @@ async fn main() {
     }
 
     join_all(fut).await;
+}
+
+fn set_path(path: String) -> Result<(), io::Error> {
+    println!("Set root directory to: {}", path);
+
+    create_dir_all(&path)?;
+
+    let root = Path::new(&path);
+    let _result = env::set_current_dir(&root)
+        .map(|_| {
+            println!("Successfully changed working directory to {}!", root.display());
+        })
+        .map_err(|err| {
+            eprintln!("Error IO change working directory to {}: {:?}!", root.display(), err);
+        });
+    Ok(())
 }
