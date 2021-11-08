@@ -35,7 +35,7 @@ pub async fn run(data: &[u8]) -> &[u8] {
         //print_type_of(&bufdata);
 
         println!("bufdata len is {}, capacity is {}", bufdata.len(), bufdata.capacity());
-        if bufdata.len() >= 1000000 {
+        if bufdata.len() >= 10000 {
             println!("bufdata len is: {}, write to file: {}!", bufdata.len(), file_write_str);
             let write_op = write::write(file_write_str, &bufdata);
 

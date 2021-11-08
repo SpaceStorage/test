@@ -39,26 +39,25 @@ impl Server {
 }
 
 pub async fn server_run(addr: String, size: usize) -> () {
-    //let sock = socket2::Socket::new(
-    //    socket2::Domain::ipv4(),
-    //    socket2::Type::stream(),
-    //    Some(socket2::Protocol::tcp()),
-    //).unwrap();
-    //
-    ////sock.set_reuse_port(true).unwrap();
-    //let addr_sock: SocketAddr = addr
-    //    .parse()
-    //    .expect("Unable to parse socket address");
-    //let addr_sock2 = SockAddr::from(addr_sock);
-    //
-    ////sock.set_nonblocking(true).unwrap();
-    //sock.bind(&addr_sock2).unwrap();
-    //sock.listen(1024).unwrap();
-    //sock.set_recv_buffer_size(size).unwrap();
-    //
-    //let socket = UdpSocket::from_std(sock.into_udp_socket()).unwrap();
+    let sock = socket2::Socket::new(
+        socket2::Domain::ipv4(),
+        socket2::Type::dgram(),
+        Some(socket2::Protocol::udp()),
+    ).unwrap();
+    
+    let addr_sock: SocketAddr = addr
+        .parse()
+        .expect("Unable to parse socket address");
+    let addr_sock2 = SockAddr::from(addr_sock);
+    
+    sock.set_nonblocking(true).unwrap();
+    sock.bind(&addr_sock2).unwrap();
+    println!("set buffer socket size {}", size);
+    sock.set_recv_buffer_size(size).unwrap();
+    
+    let socket = UdpSocket::from_std(sock.into_udp_socket()).unwrap();
 
-    let socket = UdpSocket::bind(&addr).await.unwrap();
+    //let socket = UdpSocket::bind(&addr).await.unwrap();
 
     let server = Server {
         socket,
