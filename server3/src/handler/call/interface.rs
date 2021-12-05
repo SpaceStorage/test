@@ -34,7 +34,7 @@ pub async fn run(data: &[u8]) -> &[u8] {
         let bufdata = buf.unwrap();
         //print_type_of(&bufdata);
 
-        println!("bufdata len is {}, capacity is {}", bufdata.len(), bufdata.capacity());
+        println!("bufdata len is {}, capacity is {}, buffer/file is {}", bufdata.len(), bufdata.capacity(), file_write_str);
         if bufdata.len() >= 10000 {
             println!("bufdata len is: {}, write to file: {}!", bufdata.len(), file_write_str);
             let write_op = write::write(file_write_str, &bufdata);
@@ -49,5 +49,9 @@ pub async fn run(data: &[u8]) -> &[u8] {
         }
     }
 
+    return "ok".as_bytes();
+}
+
+pub async fn run2(data: &[u8]) -> &[u8] {
     return "ok".as_bytes();
 }

@@ -16,12 +16,14 @@ thread-id = { version = "4.0.0" }
 futures = { version = "0.3" }
 config = { version = "0.11.0" }
 serde = { version = "1.0.130", features = ["derive"] }
+serde_json = { version = "1.0.70" }
 rustls-pemfile = { version = "0.2.1" }
 tokio-rustls = { version = "0.23.0" }
 lazy_static = { version = "1.4.0" }
 prometheus = { version = "0.13.0" }
 syslog_loose = { version = "0.15.0" }
 socket2 = { version = "0.3.19" }
+hostname = { version = "0.3.0" }
 
 [package.metadata.rpm]
 package = "server"

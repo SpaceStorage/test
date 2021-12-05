@@ -51,11 +51,54 @@ async fn main() {
         .and_then(listener::router::dummy::handler).with(warp::log("dummy"));
     let openmetrics = listener::router::openmetrics::router()
         .and_then(listener::router::openmetrics::handler).with(warp::log("openmetrics"));
+    //let es_api = listener::router::es_api::router()
+    //    .and_then(|scheme_header: Option<String>, host: String, path: FullPath| listener::router::es_api::handler).with(warp::log("es_api"));
+    //let es_api = listener::router::es_api::commutation();
+    let es_get = warp::get()
+        .and(warp::path!("es" / String))
+        .and(warp::path::end())
+        .and_then(listener::router::es_api::get).with(warp::log("es_get"));
+    let es_put = warp::put()
+        .and(warp::path!("es" / String / String / u64))
+        .and(warp::path::end())
+        .and(listener::router::es_api::put_body())
+        .and_then(listener::router::es_api::put).with(warp::log("es_put"));
+
+    let es_bulk_put = warp::put()
+        .and(warp::path!("_bulk"))
+        .and(warp::path::end())
+        .and(listener::router::es_api::put_body())
+        .and_then(listener::router::es_api::put_bulk).with(warp::log("es_put_bulk"));
+
+    let es_bulk_index_put = warp::put()
+        .and(warp::path!(String / "_bulk"))
+        .and(warp::path::end())
+        .and(listener::router::es_api::put_body())
+        .and_then(listener::router::es_api::put_bulk_index).with(warp::log("es_put_bulk_index"));
+
+    let es_index = warp::path::end().and_then(listener::router::es_api::get_index).with(warp::log("es_get"));
+
+    //let es_enrich_put = warp::put()
+    //    .and(warp::path!("_enrich"))
+    //    .and(warp::path::end())
+    //    .and(listener::router::es_api::put_body())
+    //    .and_then(listener::router::es_api::put).with(warp::log("es_put"));
+
+    //let es_sql_put = warp::put()
+    //    .and(warp::path!("_sql"))
+    //    .and(warp::path::end())
+    //    .and(listener::router::es_api::put_body())
+    //    .and_then(listener::router::es_api::put).with(warp::log("es_put"));
 
     let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
     let router = health
         .or(openmetrics)
-        .or(dummy);
+        .or(es_get)
+        .or(es_put)
+        .or(es_bulk_put)
+        .or(es_bulk_index_put)
+        .or(dummy)
+        .or(es_index);
 
     for srv_obj in conf.server.iter() {
 
