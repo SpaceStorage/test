@@ -1,32 +1,32 @@
 use warp::{
-    filters::BoxedFilter,
+    //filters::BoxedFilter,
     Filter,
     http,
 };
 use warp::hyper::body::Bytes;
 use serde_json;
-use std::pin::Pin;
-use futures::future::join_all;
 use std::str::{from_utf8};
 use crate::handler::call::interface;
 use crate::util::global::{GLOBAL};
 //use futures::Future;
-use crate::warp::Future;
+use std::io;
 use serde_json::json;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 
-fn path_prefix() -> BoxedFilter<()> {
-    warp::path("/")
-        .boxed()
-}
+//fn path_prefix() -> BoxedFilter<()> {
+//    warp::path("/")
+//        .boxed()
+//}
+//
+//pub fn router() -> BoxedFilter<()> {
+//    warp::get()
+//        .and(path_prefix())
+//        //.and(warp::header("host")
+//        .boxed()
+//}
 
-pub fn router() -> BoxedFilter<()> {
-    warp::get()
-        .and(path_prefix())
-        //.and(warp::header("host")
-        .boxed()
-}
-
-pub fn put_body() -> impl Filter<Extract = (Bytes,), Error = warp::Rejection> + Clone {
+pub fn post_body() -> impl Filter<Extract = (Bytes,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::bytes()) //.and(warp::body::json())
 }
 
@@ -57,7 +57,7 @@ pub async fn put(
             println!("path is {} : {} : {} : {:?}\n{:?}\n", es_index, es_type, es_id, body, json_body);
         }
 
-        let reply = format!("{{\"_index\": \"_index\"}}\n");
+        let _reply = format!("{{\"_index\": \"_index\"}}\n");
         //Ok(warp::reply::html(reply))
         Ok(warp::reply::with_status(
             "test",
@@ -65,7 +65,7 @@ pub async fn put(
         ))
 }
 
-pub async fn put_bulk(
+pub async fn post_bulk(
     body: Bytes,
     ) -> Result<impl warp::Reply, warp::Rejection> {
 
@@ -74,24 +74,54 @@ pub async fn put_bulk(
         }
 
         if let Ok(str_body) = from_utf8(&body) {
-            println!("done!!");
-            interface::run2(str_body.as_bytes()).await;
-            //let iface_op = interface::run2(str_body.as_bytes());
-            //let mut fut: Vec<Pin<Box<dyn warp::Future<Output = &[u8]>>>> = Vec::new();
-            //let mut fut: Vec<Pin<Box<dyn warp::Future<Output = &[u8]>>>> = Vec::new();
-            //fut.push(Box::pin(iface_op));
-            //join_all(fut).await;
+            let splited_json = str_body.split("\n");
+
+            let mut index_name: String = String::from("");
+            let mut doc_type: String = String::from("");
+            let mut i: u64 = 0;
+            for s in splited_json {
+                let json_body: serde_json::Value = serde_json::from_str(s).unwrap();
+                println!("done s!!: {:?}", json_body);
+
+                i += 1;
+                if (i % 2) == 1 {
+                    let index_data: serde_json::Value = json_body["index"].clone();
+                    index_name = index_data["_index"].to_string();
+                    doc_type = index_data["_type"].to_string();
+                    println!("{}: {} // {}", index_name, doc_type, json_body);
+                } else {
+                    //let mut file = fs::OpenOptions::new()
+                    //   .append(true)
+                    //   .create(true)
+                    //   .open("/Users/g.kashintsev/devel/myrepo/test/server3/test.log")
+                    //   .await
+                    //   .unwrap();
+                    //file.write_all(&"tst".as_bytes()).await.unwrap();
+
+                    interface::run_elastic_doc(json_body, &index_name, &doc_type).await;
+                    ////interface::run_elastic_doc(json_body, &index_name, &doc_type).await?;
+                    ////let fut: Vec<Pin<Box<dyn warp::Future<Output = &[u8]>>>> = Vec::new();
+                    ////fut.push(Box::pin(iface_op));
+                    ////join_all(fut).await;
+                }
+            }
+
+        //    //let iface_op = interface::run2(str_body.as_bytes());
+        //    //let mut fut: Vec<Pin<Box<dyn warp::Future<Output = &[u8]>>>> = Vec::new();
+        //    //let mut fut: Vec<Pin<Box<dyn warp::Future<Output = &[u8]>>>> = Vec::new();
+        //    //fut.push(Box::pin(iface_op));
+        //    //join_all(fut).await;
         }
 
-        let reply = format!("{{\"_index\": \"_index\"}}\n");
+        let _reply = format!("{{\"_index\": \"_index\"}}\n");
         Ok(warp::reply::with_status(
             "test",
             http::StatusCode::CREATED,
         ))
 }
 
-pub async fn put_bulk_index(
-    es_index: String,
+pub async fn post_bulk_index(
+    _es_index: String,
     body: Bytes,
     ) -> Result<impl warp::Reply, warp::Rejection> {
 
@@ -100,10 +130,10 @@ pub async fn put_bulk_index(
         }
 
         if let Ok(str_body) = from_utf8(&body) {
-            let json_body: serde_json::Value = serde_json::from_str(str_body).unwrap();
+            let _json_body: serde_json::Value = serde_json::from_str(str_body).unwrap();
         }
 
-        let reply = format!("{{\"_index\": \"_index\"}}\n");
+        let _reply = format!("{{\"_index\": \"_index\"}}\n");
         Ok(warp::reply::with_status(
             "test",
             http::StatusCode::CREATED,
