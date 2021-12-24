@@ -1,5 +1,6 @@
 use std::pin::Pin;
 use std::str;
+use std::io;
 use futures::future::join_all;
 use crate::metafs::write;
 use crate::util::global::{GLOBAL};
@@ -52,6 +53,27 @@ pub async fn run(data: &[u8]) -> &[u8] {
     return "ok".as_bytes();
 }
 
-pub async fn run2(data: &[u8]) -> &[u8] {
-    return "ok".as_bytes();
+#[derive(Debug)]
+struct IOerr;
+impl warp::reject::Reject for IOerr {}
+
+pub async fn run_elastic_doc(data: serde_json::Value, index: &str, doc_type: &str) ->  Result<&'static [u8], warp::Rejection> {
+    let file_write: Vec<u8> = "test".as_bytes().to_vec();
+    let file_write_str = str::from_utf8(&file_write).unwrap_or_else(|_| "test");
+
+    println!("Index: {}, Type: {}, Data: {:?}", index, doc_type, data);
+            let write_op = write::write(file_write_str, "test".as_bytes());
+
+    //        let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
+    //        fut.push(Box::pin(write_op));
+
+    //        join_all(fut).await;
+    //        //slb.buffer.clear();
+    ////return "ok".as_bytes();
+
+    //if 1 == 2 {
+    //    return Err(warp::reject::custom(IOerr));
+    //}
+
+    Ok("ok".as_bytes())
 }
