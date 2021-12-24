@@ -10,6 +10,9 @@ use std::fs::create_dir_all;
 use std::path::Path;
 use std::env;
 use std::io;
+use std::future::Future;
+//use tokio::runtime::Runtime;
+use tokio::runtime::Builder;
 
 mod listener;
 mod fs;
@@ -55,26 +58,26 @@ async fn main() {
     //    .and_then(|scheme_header: Option<String>, host: String, path: FullPath| listener::router::es_api::handler).with(warp::log("es_api"));
     //let es_api = listener::router::es_api::commutation();
     let es_get = warp::get()
-        .and(warp::path!("es" / String))
+        .and(warp::path!( String))
         .and(warp::path::end())
         .and_then(listener::router::es_api::get).with(warp::log("es_get"));
-    let es_put = warp::put()
-        .and(warp::path!("es" / String / String / u64))
+    let es_put = warp::post()
+        .and(warp::path!(String / String / u64))
         .and(warp::path::end())
-        .and(listener::router::es_api::put_body())
+        .and(listener::router::es_api::post_body())
         .and_then(listener::router::es_api::put).with(warp::log("es_put"));
 
-    let es_bulk_put = warp::put()
+    let es_bulk_post = warp::post()
         .and(warp::path!("_bulk"))
         .and(warp::path::end())
-        .and(listener::router::es_api::put_body())
-        .and_then(listener::router::es_api::put_bulk).with(warp::log("es_put_bulk"));
+        .and(listener::router::es_api::post_body())
+        .and_then(listener::router::es_api::post_bulk).with(warp::log("es_post_bulk"));
 
-    let es_bulk_index_put = warp::put()
+    let es_bulk_index_post = warp::post()
         .and(warp::path!(String / "_bulk"))
         .and(warp::path::end())
-        .and(listener::router::es_api::put_body())
-        .and_then(listener::router::es_api::put_bulk_index).with(warp::log("es_put_bulk_index"));
+        .and(listener::router::es_api::post_body())
+        .and_then(listener::router::es_api::post_bulk_index).with(warp::log("es_post_bulk_index"));
 
     let es_index = warp::path::end().and_then(listener::router::es_api::get_index).with(warp::log("es_get"));
 
@@ -90,15 +93,20 @@ async fn main() {
     //    .and(listener::router::es_api::put_body())
     //    .and_then(listener::router::es_api::put).with(warp::log("es_put"));
 
-    let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
+    let mut fut: Vec<Pin<Box<dyn std::future::Future<Output = ()>>>> = Vec::new();
     let router = health
         .or(openmetrics)
         .or(es_get)
         .or(es_put)
-        .or(es_bulk_put)
-        .or(es_bulk_index_put)
+        .or(es_bulk_post)
+        .or(es_bulk_index_post)
         .or(dummy)
         .or(es_index);
+
+    let mut rt = Builder::new_multi_thread()
+        .worker_threads(4)
+        .build()
+        .unwrap();
 
     for srv_obj in conf.server.iter() {
 
@@ -144,7 +152,9 @@ async fn main() {
         }
     }
 
-    join_all(fut).await;
+    rt.spawn(
+        join_all(fut).await
+    );
 }
 
 fn set_path(path: String) -> Result<(), io::Error> {
