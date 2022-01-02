@@ -15,9 +15,12 @@ use socket2::SockAddr;
 use tokio::net::TcpListener;
 
 // for hyper
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Method, StatusCode, Request, Response, Server};
+//use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Method, StatusCode, Request, Response};
+use hyper::server::Server;
 use std::convert::Infallible;
+use hyper::service::{service_fn, make_service_fn};
+//use hyper::header::{CONTENT_LENGTH, CONTENT_TYPE};
 
 // for fs
 use tokio::fs;
@@ -145,49 +148,41 @@ async fn read_bytes(name: String) -> Result<String, Box<dyn std::error::Error>> 
 }
 
 
-async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let header_host = &req.headers()["host"];
     println!("headers: {:?}", header_host);
 
-    match (req.method(), req.uri().path()) {
-        (&Method::GET, "/test") | (&Method::GET, "/index.html") => {
-            get_thread_info();
-            Ok(Response::new("Hello, World".into()))
-        }
-        (&Method::POST, "/echo/reversed") => {
-            get_thread_info();
-            let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
-            let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
-            Ok(Response::new(Body::from(reversed_body)))
-        }
-        (&Method::POST, "/") => {
-            get_thread_info();
-            let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
-            let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
-            write_bytes(&reversed_body, "test.txt".to_string()).await;
-            Ok(Response::new(Body::from("{\"status\": \"ok\"}")))
-        }
-        (&Method::GET, "/") => {
-            get_thread_info();
-            let reversed_body = read_bytes("test.txt".to_string()).await.unwrap();
-            Ok(Response::new(Body::from(reversed_body)))
-        }
-        _ => Ok(not_found()),
+    //match (req.method(), req.uri().path()) {
+    if (req.method() == &Method::GET) && (req.uri().path().starts_with("/test")) {
+        get_thread_info();
+        Ok(Response::new("Hello, World".into()))
+    }
+    else if (req.method() == &Method::POST) && (req.uri().path().starts_with("/")) {
+        get_thread_info();
+        let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
+        let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+        write_bytes(&reversed_body, "test.txt".to_string()).await;
+        Ok(Response::new(Body::from("{\"status\": \"ok\"}")))
+    }
+    else if (req.method() == &Method::GET) && (req.uri().path().starts_with("/")) {
+        get_thread_info();
+        let reversed_body = read_bytes("test.txt".to_string()).await.unwrap();
+        Ok(Response::new(Body::from(reversed_body)))
+    } else {
+        Ok(not_found())
     }
 }
 
-async fn http_server_start(_rt: &Runtime, addr: &str) {
+async fn http_server_start(rt: &Runtime, addr: &str) {
     // We'll bind to 127.0.0.1:3000
     //let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let socket: SocketAddr = addr
         .parse()
         .expect("Unable to parse socket address");
 
-    // A `Service` is needed for every connection, so this
-    // creates one from our `hello_world` function.
     let make_svc = make_service_fn(|_conn| async {
         // service_fn converts our function into a `Service`
-        Ok::<_, Infallible>(service_fn(hello_world))
+        Ok::<_, Infallible>(service_fn(router_service))
     });
 
     let server = Server::bind(&socket)
@@ -195,9 +190,6 @@ async fn http_server_start(_rt: &Runtime, addr: &str) {
         .tcp_nodelay(true)
         .serve(make_svc);
 
-    // Run this server for... forever!
-    if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
-    }
+    rt.spawn(server);
 }
 
