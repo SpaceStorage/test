@@ -19,6 +19,9 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, StatusCode, Request, Response, Server};
 use std::convert::Infallible;
 
+// for fs
+use tokio::fs;
+use tokio::fs::File;
 
 #[tokio::main]
 async fn main() {
@@ -40,7 +43,7 @@ async fn main() {
     let mut futures: Vec<Pin<Box<dyn std::future::Future<Output = ()>>>> = Vec::new();
     futures.push(Box::pin(tcp_server_start(&rt, "0.0.0.0:1111")));
     futures.push(Box::pin(udp_server_start(&rt, "0.0.0.0:1111", 10000)));
-    futures.push(Box::pin(http_server_start("0.0.0.0:1112")));
+    futures.push(Box::pin(http_server_start(&rt, "0.0.0.0:1112")));
     join_all(futures).await;
 }
 
@@ -122,17 +125,58 @@ fn not_found() -> Response<Body> {
         .unwrap()
 }
 
+pub async fn write_bytes(bytes: &[u8], name: String) {
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(name + ".log")
+        .await
+        .unwrap();
+     file.write_all(&bytes).await.unwrap();
+}
+
+async fn read_bytes(name: String) -> Result<String, Box<dyn std::error::Error>> {
+    let mut file = File::open(name + ".log").await?;
+
+    let mut contents = vec![];
+    file.read_to_end(&mut contents).await?;
+    let json_string = String::from_utf8(contents)?;
+    return Ok(json_string);
+}
+
+
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let header_host = &req.headers()["host"];
+    println!("headers: {:?}", header_host);
+
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/test") | (&Method::GET, "/index.html") => {
             get_thread_info();
             Ok(Response::new("Hello, World".into()))
         }
+        (&Method::POST, "/echo/reversed") => {
+            get_thread_info();
+            let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
+            let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+            Ok(Response::new(Body::from(reversed_body)))
+        }
+        (&Method::POST, "/") => {
+            get_thread_info();
+            let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
+            let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+            write_bytes(&reversed_body, "test.txt".to_string()).await;
+            Ok(Response::new(Body::from("{\"status\": \"ok\"}")))
+        }
+        (&Method::GET, "/") => {
+            get_thread_info();
+            let reversed_body = read_bytes("test.txt".to_string()).await.unwrap();
+            Ok(Response::new(Body::from(reversed_body)))
+        }
         _ => Ok(not_found()),
     }
 }
 
-async fn http_server_start(addr: &str) {
+async fn http_server_start(_rt: &Runtime, addr: &str) {
     // We'll bind to 127.0.0.1:3000
     //let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let socket: SocketAddr = addr
@@ -146,7 +190,10 @@ async fn http_server_start(addr: &str) {
         Ok::<_, Infallible>(service_fn(hello_world))
     });
 
-    let server = Server::bind(&socket).serve(make_svc);
+    let server = Server::bind(&socket)
+        .tcp_keepalive(Some(Duration::from_secs(60)))
+        .tcp_nodelay(true)
+        .serve(make_svc);
 
     // Run this server for... forever!
     if let Err(e) = server.await {
