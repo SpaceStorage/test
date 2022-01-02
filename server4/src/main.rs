@@ -160,14 +160,21 @@ async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible
     else if (req.method() == &Method::POST) && (req.uri().path().starts_with("/")) {
         get_thread_info();
         let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
-        let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
-        write_bytes(&reversed_body, "test.txt".to_string()).await;
+        //let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+        write_bytes(&whole_body, "test.txt".to_string()).await;
+        Ok(Response::new(Body::from("{\"status\": \"ok\"}")))
+    }
+    else if (req.method() == &Method::PUT) && (req.uri().path().starts_with("/")) {
+        get_thread_info();
+        let whole_body = hyper::body::to_bytes(req.into_body()).await.unwrap();
+        //let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+        write_bytes(&whole_body, "test.txt".to_string()).await;
         Ok(Response::new(Body::from("{\"status\": \"ok\"}")))
     }
     else if (req.method() == &Method::GET) && (req.uri().path().starts_with("/")) {
         get_thread_info();
-        let reversed_body = read_bytes("test.txt".to_string()).await.unwrap();
-        Ok(Response::new(Body::from(reversed_body)))
+        let response = read_bytes("test.txt".to_string()).await.unwrap();
+        Ok(Response::new(Body::from(response)))
     } else {
         Ok(not_found())
     }
