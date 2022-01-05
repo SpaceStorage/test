@@ -1,0 +1,12 @@
+[package]
+name = "crypto"
+version = "0.1.0"
+authors = ["amoshi <amoshi.mandrakeuser@gmail.com>"]
+edition = "2018"
+description = "crypto"
+license = "Apache-2.0"
+
+[dependencies]
+aes = { version = "0.7.5" }
+hex-literal = "*"
+block-modes = "0.8.1"
