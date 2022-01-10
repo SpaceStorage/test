@@ -184,11 +184,11 @@ async fn udp_server_start(rt: &Runtime, addr: &str, size: usize) {
                 println!("x is {}", x);
                 //println!("thread spawned: {}", String::from_utf8(buf.to_vec()).unwrap());
                 println!("spawned thread has id {}", thread_id::get());
-                if let Ok(slb) = GLOBAL.lock() {
-                    slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
-                    slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
-                }
             });
+            if let Ok(slb) = GLOBAL.lock() {
+                slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
+                slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
+            }
             //socket.send_to(&buf[..size], &peer).await.unwrap();
         }
     }
