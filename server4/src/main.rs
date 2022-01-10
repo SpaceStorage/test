@@ -26,6 +26,73 @@ use hyper::service::{service_fn, make_service_fn};
 use tokio::fs;
 use tokio::fs::File;
 
+// for prometheus
+#[macro_use]
+extern crate lazy_static;
+use prometheus::{Encoder, Opts, Registry, TextEncoder, CounterVec, GaugeVec};
+use std::sync::Mutex;
+use std::collections::HashMap;
+
+pub struct SpaceLocalBuffer {
+    pub buffer: HashMap<String, Vec<u8>>,
+    pub buffer_size: usize,
+    pub metrics_tree: Prometheus,
+}
+
+impl SpaceLocalBuffer {
+    pub fn new() -> SpaceLocalBuffer {
+        return SpaceLocalBuffer {
+            buffer: HashMap::new(),
+            buffer_size: 1000000,
+            metrics_tree: Prometheus::new(),
+        };
+    }
+
+    pub fn insert(&mut self, name: String, value: Vec<u8>) {
+        self.buffer.insert(name, value);
+    }
+}
+
+pub struct Prometheus {
+    r: prometheus::Registry,
+    pub access: prometheus::CounterVec,
+    pub access_received_bytes: prometheus::CounterVec,
+    pub response_time: prometheus::GaugeVec,
+}
+
+impl Prometheus {
+    pub fn new() -> Self {
+        let access_opts = Opts::new("spacestorage_access", "access queries");
+        let access_received_bytes_opts = Opts::new("spacestorage_received_bytes", "received bytes");
+        let response_time_opts = Opts::new("spacestorage_response_time", "response time");
+        let metric_tree = Prometheus {
+            r: Registry::new(),
+            access: CounterVec::new(access_opts, &["namespace", "project", "operation"]).unwrap(),
+            access_received_bytes: CounterVec::new(access_received_bytes_opts, &["namespace", "project", "operation"]).unwrap(),
+            response_time: GaugeVec::new(response_time_opts, &["project", "operation", "quantile"]).unwrap(),
+        };
+
+        metric_tree.r.register(Box::new(metric_tree.access.clone())).unwrap();
+        metric_tree.r.register(Box::new(metric_tree.access_received_bytes.clone())).unwrap();
+        metric_tree.r.register(Box::new(metric_tree.response_time.clone())).unwrap();
+
+        return metric_tree;
+    }
+
+    pub fn get_metrics(&mut self) -> std::vec::Vec::<u8> {
+        let mut buffer = Vec::<u8>::new();
+        let encoder = TextEncoder::new();
+        let metric_families = self.r.gather();
+        encoder.encode(&metric_families, &mut buffer).unwrap();
+
+        return buffer;
+    }
+}
+
+lazy_static!(
+    pub static ref GLOBAL: Mutex<SpaceLocalBuffer> = Mutex::new(SpaceLocalBuffer::new());
+);
+
 #[tokio::main]
 async fn main() {
     // build runtime
@@ -117,6 +184,10 @@ async fn udp_server_start(rt: &Runtime, addr: &str, size: usize) {
                 println!("x is {}", x);
                 //println!("thread spawned: {}", String::from_utf8(buf.to_vec()).unwrap());
                 println!("spawned thread has id {}", thread_id::get());
+                if let Ok(slb) = GLOBAL.lock() {
+                    slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
+                    slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
+                }
             });
             //socket.send_to(&buf[..size], &peer).await.unwrap();
         }
@@ -149,6 +220,22 @@ async fn read_bytes(name: String) -> Result<String, Box<dyn std::error::Error>> 
     return Ok(json_string);
 }
 
+async fn openmetrics() -> Result<String, Box<dyn std::error::Error>> {
+    let mut ret_string: String = "".to_string();
+
+    match GLOBAL.lock() {
+        Ok(mut slb) => {
+            let metrics_str = slb.metrics_tree.get_metrics();
+            //let metrics_converted = String::from_utf8(metrics_str).unwrap();
+            ret_string = String::from_utf8(metrics_str).unwrap();
+        }
+        Err(e) => {
+            println!("error is {}", e);
+        }
+    }
+    return Ok(ret_string);
+}
+
 
 async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let header_host = &req.headers()["host"];
@@ -157,6 +244,10 @@ async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible
     if (req.method() == &Method::GET) && (req.uri().path().starts_with("/test")) {
         get_thread_info();
         Ok(Response::new("Hello, World".into()))
+    }
+    else if (req.method() == &Method::GET) && (req.uri().path().starts_with("/metrics")) {
+        let response = openmetrics().await.unwrap();
+        Ok(Response::new(Body::from(response)))
     }
     else if (req.method() == &Method::POST) && (req.uri().path().starts_with("/")) {
         get_thread_info();
@@ -176,7 +267,8 @@ async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible
         get_thread_info();
         let response = read_bytes("test.txt".to_string()).await.unwrap();
         Ok(Response::new(Body::from(response)))
-    } else {
+    }
+    else {
         Ok(not_found())
     }
 }
