@@ -45,7 +45,7 @@ async fn main() {
     //let mut futures = Vec::new();
     let mut futures: Vec<Pin<Box<dyn std::future::Future<Output = ()>>>> = Vec::new();
     futures.push(Box::pin(tcp_server_start(&rt, "0.0.0.0:1111")));
-    futures.push(Box::pin(udp_server_start(&rt, "0.0.0.0:1111", 10000)));
+    futures.push(Box::pin(udp_server_start(&rt, "0.0.0.0:514", 10000)));
     futures.push(Box::pin(http_server_start(&rt, "0.0.0.0:1112")));
     join_all(futures).await;
 }
@@ -152,7 +152,6 @@ async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible
     let header_host = &req.headers()["host"];
     println!("headers: {:?}", header_host);
 
-    //match (req.method(), req.uri().path()) {
     if (req.method() == &Method::GET) && (req.uri().path().starts_with("/test")) {
         get_thread_info();
         Ok(Response::new("Hello, World".into()))
@@ -181,14 +180,11 @@ async fn router_service(req: Request<Body>) -> Result<Response<Body>, Infallible
 }
 
 async fn http_server_start(rt: &Runtime, addr: &str) {
-    // We'll bind to 127.0.0.1:3000
-    //let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let socket: SocketAddr = addr
         .parse()
         .expect("Unable to parse socket address");
 
     let make_svc = make_service_fn(|_conn| async {
-        // service_fn converts our function into a `Service`
         Ok::<_, Infallible>(service_fn(router_service))
     });
 
