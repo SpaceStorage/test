@@ -44,9 +44,9 @@ async fn main() {
 
     //let mut futures = Vec::new();
     let mut futures: Vec<Pin<Box<dyn std::future::Future<Output = ()>>>> = Vec::new();
-    futures.push(Box::pin(tcp_server_start(&rt, "0.0.0.0:1111")));
+    futures.push(Box::pin(tcp_server_start(&rt, "0.0.0.0:1112")));
     futures.push(Box::pin(udp_server_start(&rt, "0.0.0.0:514", 10000)));
-    futures.push(Box::pin(http_server_start(&rt, "0.0.0.0:1112")));
+    futures.push(Box::pin(http_server_start(&rt, "0.0.0.0:1113")));
     join_all(futures).await;
 }
 
