@@ -30,7 +30,7 @@ use tokio::fs::File;
 async fn main() {
     // build runtime
     let rt = Builder::new_multi_thread()
-        .worker_threads(46)
+        .worker_threads(47)
         .enable_all()
         .enable_io()
         .on_thread_start(|| {
@@ -113,7 +113,7 @@ async fn udp_server_start(rt: &Runtime, addr: &str, size: usize) {
             rt.spawn(async move {
                 //let ten_millis = Duration::from_millis(1000);
                 //thread::sleep(ten_millis);
-                let x = pi(1000);
+                let x = pi(100);
                 println!("x is {}", x);
                 println!("thread spawned: {}", String::from_utf8(buf.to_vec()).unwrap());
                 println!("spawned thread has id {}", thread_id::get());
