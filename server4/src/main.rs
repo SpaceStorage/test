@@ -30,7 +30,7 @@ use tokio::fs::File;
 async fn main() {
     // build runtime
     let rt = Builder::new_multi_thread()
-        .worker_threads(4)
+        .worker_threads(46)
         .enable_all()
         .enable_io()
         .on_thread_start(|| {
