@@ -29,7 +29,7 @@ use tokio::fs::File;
 // for prometheus
 #[macro_use]
 extern crate lazy_static;
-use prometheus::{Encoder, Opts, Registry, TextEncoder, CounterVec, GaugeVec};
+use prometheus::{Encoder, Opts, Registry, TextEncoder, IntCounterVec, CounterVec, GaugeVec, register_int_counter_vec};
 use std::sync::Mutex;
 use std::collections::HashMap;
 
@@ -72,9 +72,8 @@ impl Prometheus {
             response_time: GaugeVec::new(response_time_opts, &["project", "operation", "quantile"]).unwrap(),
         };
 
-        metric_tree.r.register(Box::new(metric_tree.access.clone())).unwrap();
-        metric_tree.r.register(Box::new(metric_tree.access_received_bytes.clone())).unwrap();
-        metric_tree.r.register(Box::new(metric_tree.response_time.clone())).unwrap();
+        metric_tree.r.register(Box::new(METRIC_ACCESS_COUNTER.clone())).unwrap();
+        metric_tree.r.register(Box::new(METRIC_RECEIVED_BYTES_COUNTER.clone())).unwrap();
 
         return metric_tree;
     }
@@ -92,6 +91,22 @@ impl Prometheus {
 lazy_static!(
     pub static ref GLOBAL: Mutex<SpaceLocalBuffer> = Mutex::new(SpaceLocalBuffer::new());
 );
+
+lazy_static! {
+    pub static ref METRIC_ACCESS_COUNTER: IntCounterVec =
+        register_int_counter_vec ! (
+            "spacestorage_access",
+            "access queries",
+            & ["namespace", "project", "operation"]
+        ).unwrap();
+    pub static ref METRIC_RECEIVED_BYTES_COUNTER: IntCounterVec =
+        register_int_counter_vec ! (
+            "spacestorage_received_bytes",
+            "received bytes",
+            & ["namespace", "project", "operation"]
+        ).unwrap();
+}
+
 
 #[tokio::main]
 async fn main() {
@@ -182,15 +197,10 @@ async fn udp_server_start(rt: &Runtime, addr: &str, size: usize) {
                 //thread::sleep(ten_millis);
                 let x = pi(14);
                 println!("x is {}", x);
-                //println!("thread spawned: {}", String::from_utf8(buf.to_vec()).unwrap());
                 println!("spawned thread has id {}", thread_id::get());
-                if let Ok(slb) = GLOBAL.lock() {
-                    slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
-                    slb.metrics_tree.access_received_bytes.with_label_values(&["global", "global", "udp"]).inc_by(size as f64);
-                    println!("store metric");
-                }
+                METRIC_ACCESS_COUNTER.with_label_values(&["global", "global", "udp"]).inc();
+                METRIC_RECEIVED_BYTES_COUNTER.with_label_values(&["global", "global", "udp"]).inc_by(size as u64);
             });
-            //socket.send_to(&buf[..size], &peer).await.unwrap();
         }
     }
 }
