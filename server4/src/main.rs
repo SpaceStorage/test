@@ -112,7 +112,7 @@ lazy_static! {
 async fn main() {
     // build runtime
     let rt = Builder::new_multi_thread()
-        .worker_threads(47)
+        .worker_threads(23)
         .enable_all()
         .enable_io()
         .on_thread_start(|| {
@@ -195,7 +195,7 @@ async fn udp_server_start(rt: &Runtime, addr: &str, size: usize) {
             rt.spawn(async move {
                 //let ten_millis = Duration::from_millis(1000);
                 //thread::sleep(ten_millis);
-                let _x = pi(10);
+                let _x = pi(5);
                 //println!("x is {}", x);
                 //println!("spawned thread has id {}", thread_id::get());
                 METRIC_ACCESS_COUNTER.with_label_values(&["global", "global", "udp"]).inc();
