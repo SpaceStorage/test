@@ -1,6 +1,13 @@
-use tracing::{info, Level};
+use tracing::{Level, info};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber;
+use tracing_subscriber::layer::SubscriberExt;
+
+//#[instrument]
+pub fn a_unit_of_work(first_parameter: u64) {
+    info!(excited = "true", "Tracing is quite cool!");
+}
 
 fn main() {
 
@@ -19,6 +26,12 @@ fn main() {
             .with_max_level(tracing::Level::TRACE)
             .finish();
 
+    // bunyan format logger
+    let formatting_layer = BunyanFormattingLayer::new("tracing_demo".into(), std::io::stdout);
+    let subscriberBunyan = tracing_subscriber::registry::Registry::default()
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
+
     // log to stdout
     tracing::subscriber::with_default(collector, || {
         info!("This will be logged to stdout");
@@ -31,5 +44,12 @@ fn main() {
 
     // log to devnull
     info!("This will _not_ be logged to stdout");
+
+    // log bunyan format
+    tracing::subscriber::with_default(subscriberBunyan, || {
+        info!("Orphan event without a parent span");
+        a_unit_of_work(2);
+    });
+
 }
 

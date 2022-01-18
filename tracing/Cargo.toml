@@ -7,12 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tracing = { version = "0.1.29", default-features = false }
+tracing = { version = "0.1.26", default-features = false }
 tracing-core = { version = "0.1.21", default-features = false }
 tracing-futures = { version = "0.2.5", default-features = false, features = ["futures-03"] }
 tracing-log = { version = "0.1.2", default-features = false, features = ["log-tracer", "std"] }
 tracing-subscriber = { version = "0.3.3", default-features = false, features = ["ansi", "fmt", "json", "registry"] }
 tracing-serde = { version = "0.1" }
 tracing-appender = { version = "0.2.0" }
+tracing-bunyan-formatter = { version = "0.3.1" }
 syslog = "*"
 tokio = { version = "1.12.0", features = ["full"] }
