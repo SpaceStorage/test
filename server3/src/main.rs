@@ -26,7 +26,7 @@ use settings::settings::Settings;
 mod util;
 mod handler;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let conf = Settings::new()
         .expect("Config parse error");
@@ -117,11 +117,11 @@ async fn main() {
 
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
                 let srv_init = warp::serve(router.clone())
-                    .tls()
-                    .cert_path(&srv_obj.tls.certificate)
-                    .key_path(&srv_obj.tls.key)
-                    .run(socket);
-                fut.push(Box::pin(srv_init));
+                        .tls()
+                        .cert_path(&srv_obj.tls.certificate)
+                        .key_path(&srv_obj.tls.key)
+                        .run(socket);
+                    fut.push(Box::pin(srv_init));
                 println!("Rust inside, warp HTTPs server at {}", bold.apply_to(green.apply_to(&srv_obj.addr)));
             } else {
                 let srv_init = warp::serve(router.clone())
@@ -152,9 +152,7 @@ async fn main() {
         }
     }
 
-    rt.spawn(
-        join_all(fut).await
-    );
+   join_all(fut).await;
 }
 
 fn set_path(path: String) -> Result<(), io::Error> {

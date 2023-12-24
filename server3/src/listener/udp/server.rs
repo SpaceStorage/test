@@ -4,6 +4,8 @@ use std::{io};
 use tokio::net::UdpSocket;
 use crate::util::global::{GLOBAL};
 use crate::handler::call::interface;
+use tokio::runtime::Builder;
+use tokio::task;
 
 struct Server {
     socket: UdpSocket,
@@ -11,16 +13,29 @@ struct Server {
     to_send: Option<(usize, SocketAddr)>,
 }
 
+
 impl Server {
-    async fn run(self) -> Result<(), io::Error> {
+    //async fn run(self) -> Result<(), io::Error> {
+    async fn run(self) {
         let Server {
             socket,
             mut buf,
             mut to_send,
         } = self;
+        //let pool = ThreadPool::new(4);
+        //    let mut rt = Builder::new_multi_thread()
+        //.worker_threads(4)
+        //.build()
+        //.unwrap();
 
+
+        let mut rt = Builder::new_multi_thread()
+            .worker_threads(4)
+            .build()
+            .unwrap();
+        rt.spawn(async move {
         loop {
-            if let Some((size, peer)) = to_send {
+            if let Some((size, _peer)) = to_send {
                 //let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
 
                 if let Ok(slb) = GLOBAL.lock() {
@@ -30,11 +45,14 @@ impl Server {
 
                 //println!("UDP Echoed {} bytes to {}: {:?}", size, peer, std::str::from_utf8(&buf[..size]));
 
-                interface::run(&buf[..size]).await;
+                    let buffer_cloned = buf.clone();
+                    interface::run2(&buffer_cloned[..size]).await;
+                    //interface::run(&buffer_cloned[..size]).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());
         }
+        });
     }
 }
 
@@ -66,5 +84,5 @@ pub async fn server_run(addr: String, size: usize) -> () {
     };
 
     // This starts the server task.
-    server.run().await.unwrap();
+    server.run().await; //.unwrap();
 }

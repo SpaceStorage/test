@@ -26,6 +26,7 @@ pub async fn write_idx(bytes: &u8, name: String) {
 }
 
 pub async fn operation_write(bytes: &[u8], idx: &u8, name: String) {
+    println!("file is {}", name);
     let wb = write_bytes(bytes, name.clone());
     let wi = write_idx(idx, name.clone());
 

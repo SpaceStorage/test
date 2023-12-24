@@ -13,13 +13,13 @@ impl Record {
         };
     }
 
-    pub fn is_syslog(self) -> bool {
-        if self.data[0] == '<' as u8 {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    //pub fn is_syslog(self) -> bool {
+    //    if self.data[0] == '<' as u8 {
+    //        return true;
+    //    } else {
+    //        return false;
+    //    }
+    //}
 
     pub fn syslog_parse(&mut self) {
         syslog::run(self);
