@@ -46,8 +46,8 @@ impl Server {
                 //println!("UDP Echoed {} bytes to {}: {:?}", size, peer, std::str::from_utf8(&buf[..size]));
 
                     let buffer_cloned = buf.clone();
-                    interface::run2(&buffer_cloned[..size]).await;
-                    //interface::run(&buffer_cloned[..size]).await;
+                    //interface::run2(&buffer_cloned[..size]).await;
+                    interface::run(&buffer_cloned[..size]).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());

@@ -116,6 +116,7 @@ async fn main() {
                 .expect("Unable to parse socket address");
 
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
+                println!("start webserver with cert '{}' '{}'", srv_obj.tls.certificate, srv_obj.tls.key);
                 let srv_init = warp::serve(router.clone())
                         .tls()
                         .cert_path(&srv_obj.tls.certificate)
@@ -130,7 +131,6 @@ async fn main() {
                 println!("Rust inside, warp HTTP server at {}", bold.apply_to(cyan.apply_to(&srv_obj.addr)));
             }
         } else if srv_obj.proto == "tcp" {
-            //listener::tcp::server::run(srv_obj.addr.clone());
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
                 let srv_init = listener::tcp::tls::run(srv_obj.addr.clone(), srv_obj.tls.certificate.clone(), srv_obj.tls.key.clone());
                 fut.push(Box::pin(srv_init));

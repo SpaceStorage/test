@@ -11,7 +11,8 @@ license = "Apache-2.0"
 [dependencies]
 warp = { version = "0.3.1", features = ["compression", "tls"] }
 console = "0.9.1"
-tokio = { version = "1.12.0", features = ["full"] }
+tokio = { version = "1.35.0", features = ["full"] }
+#tokio-uring = { version = "0.4.0" }
 thread-id = { version = "4.0.0" }
 futures = { version = "0.3" }
 config = { version = "0.11.0" }

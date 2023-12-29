@@ -93,7 +93,7 @@ pub async fn post_bulk(
                     //let mut file = fs::OpenOptions::new()
                     //   .append(true)
                     //   .create(true)
-                    //   .open("/Users/g.kashintsev/devel/myrepo/test/server3/test.log")
+                    //   .open("./test.log")
                     //   .await
                     //   .unwrap();
                     //file.write_all(&"tst".as_bytes()).await.unwrap();

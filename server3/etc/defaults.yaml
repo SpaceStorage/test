@@ -21,18 +21,19 @@ server:
 - addr: 127.0.0.1:9666
   buffer_size: 16000
   proto: tcp
-  tls: 
+  handler: redis
+  tls:
     certificate: "tls/cert.pem"
     key: "tls/key2.rsa"
-- addr: 127.0.0.1:16999
-  buffer_size: 16000
-  proto: udp
-  tls: 
-    certificate: ""
-    key: ""
-- addr: 127.0.0.1:19666
-  buffer_size: 16000
-  proto: udp
-  tls: 
-    certificate: "tls/cert.pem"
-    key: "tls/key2.rsa"
+#- addr: 127.0.0.1:16999
+#  buffer_size: 16000
+#  proto: udp
+#  tls:
+#    certificate: ""
+#    key: ""
+#- addr: 127.0.0.1:19666
+#  buffer_size: 16000
+#  proto: udp
+#  tls:
+#    certificate: "tls/cert.pem"
+#    key: "tls/key2.rsa"
