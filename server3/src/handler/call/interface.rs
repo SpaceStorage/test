@@ -1,34 +1,35 @@
-use std::pin::Pin;
+//use std::pin::Pin;
 use std::str;
-use std::io;
-use futures::future::join_all;
+//use std::io;
+//use futures::future::join_all;
 use crate::metafs::write;
-use crate::util::global::{GLOBAL};
+//use crate::util::global::{GLOBAL};
 use crate::parser;
+use crate::handler::redis;
 
 //fn print_type_of<T>(_: &T) {
 //    println!("{}", std::any::type_name::<T>())
 //}
 
-use std::cmp;
-use std::fmt;
-use ::std::{*,
-    convert::{
-        TryFrom,
-    },
-    ops::{
-        Not,
-        Sub,
-    },
-};
-use ::num_bigint::{ // 0.2.2
-    BigInt,
-    BigUint,
-};
+//use std::cmp;
+//use std::fmt;
+//use ::std::{*,
+//    convert::{
+//        TryFrom,
+//    },
+//    ops::{
+//        Not,
+//        Sub,
+//    },
+//};
+//use ::num_bigint::{ // 0.2.2
+//    BigInt,
+//    BigUint,
+//};
 
-pub async fn run(data: &[u8]) -> &[u8] {
+pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> &'a [u8] {
     let newline : &[u8] = &[0x0a];
-    let res:Vec<u8> = [data, newline].concat();
+    let _res:Vec<u8> = [data, newline].concat();
 
     let mut rec_data = parser::record::Record::new(data.to_vec());
     rec_data.syslog_parse();
@@ -65,9 +66,15 @@ pub async fn run(data: &[u8]) -> &[u8] {
     //        bufdata.extend(res.clone());
     //    }
     //}
-    let write_op = write::write(file_write_str, &data).await;
+    let _write_op = write::write(file_write_str, &data).await;
 
-    return "ok".as_bytes();
+    let mut ret = "";
+    if handler == "redis" {
+        //ret = "+OK\r\n";
+        ret = redis::interface::run(data).await;
+    }
+
+    return ret.as_bytes();
 }
 
 #[derive(Debug)]
@@ -79,7 +86,7 @@ pub async fn run_elastic_doc(data: serde_json::Value, index: &str, doc_type: &st
     let file_write_str = str::from_utf8(&file_write).unwrap_or_else(|_| "test");
 
     println!("Index: {}, Type: {}, Data: {:?}", index, doc_type, data);
-            let write_op = write::write(file_write_str, "test".as_bytes());
+            let _write_op = write::write(file_write_str, "test".as_bytes());
 
     //        let mut fut: Vec<Pin<Box<dyn warp::Future<Output = ()>>>> = Vec::new();
     //        fut.push(Box::pin(write_op));

@@ -1,16 +1,18 @@
 use std::net::SocketAddr;
 use socket2::SockAddr;
-use std::{io};
+//use std::{io};
 use tokio::net::UdpSocket;
 use crate::util::global::{GLOBAL};
 use crate::handler::call::interface;
 use tokio::runtime::Builder;
-use tokio::task;
+use std::sync::{Arc, Mutex};
+//use tokio::task;
 
 struct Server {
     socket: UdpSocket,
     buf: Vec<u8>,
     to_send: Option<(usize, SocketAddr)>,
+    handler: String,
 }
 
 
@@ -21,6 +23,7 @@ impl Server {
             socket,
             mut buf,
             mut to_send,
+            ref handler,
         } = self;
         //let pool = ThreadPool::new(4);
         //    let mut rt = Builder::new_multi_thread()
@@ -28,8 +31,9 @@ impl Server {
         //.build()
         //.unwrap();
 
+        let handler = Arc::new(Mutex::new(self.handler.clone()));
 
-        let mut rt = Builder::new_multi_thread()
+        let rt = Builder::new_multi_thread()
             .worker_threads(4)
             .build()
             .unwrap();
@@ -37,6 +41,7 @@ impl Server {
         loop {
             if let Some((size, _peer)) = to_send {
                 //let amt = socket.send_to(&buf[..size], &peer).await.unwrap();
+                let handler = handler.lock().unwrap().clone();
 
                 if let Ok(slb) = GLOBAL.lock() {
                     slb.metrics_tree.access.with_label_values(&["global", "global", "udp"]).inc();
@@ -47,7 +52,7 @@ impl Server {
 
                     let buffer_cloned = buf.clone();
                     //interface::run2(&buffer_cloned[..size]).await;
-                    interface::run(&buffer_cloned[..size]).await;
+                    interface::run(&buffer_cloned[..size], &handler).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());
@@ -56,12 +61,14 @@ impl Server {
     }
 }
 
-pub async fn server_run(addr: String, size: usize) -> () {
+pub async fn server_run(addr: String, size: usize, handler: String) -> () {
     let sock = socket2::Socket::new(
         socket2::Domain::ipv4(),
         socket2::Type::dgram(),
         Some(socket2::Protocol::udp()),
     ).unwrap();
+
+    //let handler = Arc::new(Mutex::new(handler.clone()));
     
     let addr_sock: SocketAddr = addr
         .parse()
@@ -81,6 +88,7 @@ pub async fn server_run(addr: String, size: usize) -> () {
         socket,
         buf: vec![0; size],
         to_send: None,
+        handler: handler.clone(),
     };
 
     // This starts the server task.

@@ -1,12 +1,12 @@
-use crate::fs;
-use std::pin::Pin;
-use futures::future::join_all;
+//use crate::fs;
+//use std::pin::Pin;
+//use futures::future::join_all;
 use tokio::io::AsyncWriteExt;
 use tokio::fs::OpenOptions;
 //use tokio_uring::fs::File;
 
 
-pub async fn write(name: &str, bytes: &[u8]) {
+pub async fn write(_name: &str, bytes: &[u8]) {
     ////let mut filepos = fs::read::read_last_idx(name.to_string()).await;
     ////filepos += 1;
     //let filepos = 0;
@@ -22,5 +22,5 @@ pub async fn write(name: &str, bytes: &[u8]) {
        .open("./test.log")
        .await
        .unwrap();
-    file.write_all(&"tst".as_bytes()).await.unwrap();
+    file.write_all(bytes).await.unwrap();
 }

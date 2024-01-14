@@ -10,7 +10,7 @@ use std::fs::create_dir_all;
 use std::path::Path;
 use std::env;
 use std::io;
-use std::future::Future;
+//use std::future::Future;
 //use tokio::runtime::Runtime;
 use tokio::runtime::Builder;
 
@@ -93,6 +93,7 @@ async fn main() {
     //    .and(listener::router::es_api::put_body())
     //    .and_then(listener::router::es_api::put).with(warp::log("es_put"));
 
+    let functions = handler::get_handlers();
     let mut fut: Vec<Pin<Box<dyn std::future::Future<Output = ()>>>> = Vec::new();
     let router = health
         .or(openmetrics)
@@ -116,7 +117,6 @@ async fn main() {
                 .expect("Unable to parse socket address");
 
             if srv_obj.tls.key != "" && srv_obj.tls.certificate != "" {
-                println!("start webserver with cert '{}' '{}'", srv_obj.tls.certificate, srv_obj.tls.key);
                 let srv_init = warp::serve(router.clone())
                         .tls()
                         .cert_path(&srv_obj.tls.certificate)
@@ -136,7 +136,7 @@ async fn main() {
                 fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio TLS server at {}", green.apply_to(&srv_obj.addr));
             } else {
-                let srv_init = listener::tcp::server::run(srv_obj.addr.clone());
+                let srv_init = listener::tcp::server::run(srv_obj.addr.clone(), srv_obj.handler.clone());
                 fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio TCP server at {}", cyan.apply_to(&srv_obj.addr));
             }
@@ -145,7 +145,7 @@ async fn main() {
                 println!("Rust inside, Tokio DTLS server at {}", magenta.apply_to(&srv_obj.addr));
                 println!("Erorr: spacestorage now not support DTLS, port not listening");
             } else {
-                let srv_init = listener::udp::server::server_run(srv_obj.addr.clone(), srv_obj.buffer_size);
+                let srv_init = listener::udp::server::server_run(srv_obj.addr.clone(), srv_obj.buffer_size, srv_obj.handler.clone());
                 fut.push(Box::pin(srv_init));
                 println!("Rust inside, Tokio UDP server at {}", red.apply_to(&srv_obj.addr));
             }
