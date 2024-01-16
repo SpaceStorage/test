@@ -1,25 +1,25 @@
 pub mod call;
 pub mod redis;
 
-fn f() {
-    println!("hello!")
+fn f(data: &[u8]) -> &str {
+    println!("hello! {}", String::from_utf8_lossy(data));
+    "check_chpok"
 }
 
-fn w() {
-    println!("world!")
+fn w(data: &[u8]) -> &str {
+    println!("world! {}", String::from_utf8_lossy(data));
+    "check_ok"
 }
 
 
-//pub async fn get_handlers() -> Vec<for<'a> fn(&[u8]) -> impl for<'b> warp::Future<&str>> {
-//pub async fn get_handlers() -> Vec<for<'a> fn(&[u8]) -> impl warp::Future<Output = &str>> {
 pub async fn get_handlers() {
-    //let redis_call: fn(&[u8]) -> impl warp::Future<Output = &str> = redis::interface::run;
+    let funpointer: Vec<fn(&[u8]) -> &str> = vec![f, w];
+    let redis_call: fn(&[u8]) -> &str> = redis::interface::run;
     ////let functions: Vec<fn(&[u8]) -> impl warp::Future<Output>> = vec![redis::interface::run];
     //let functions: Vec<fn(&[u8]) -> impl warp::Future<Output = &str>> = vec![redis_call];
 
-    let funpointer: Vec<fn()> = vec![f, w];
-    funpointer[1]();
-    funpointer[0]();
+    funpointer[1]("check1".as_bytes());
+    funpointer[0]("check2".as_bytes());
 
     //return functions
 }
