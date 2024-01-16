@@ -14,7 +14,7 @@ fn w(data: &[u8]) -> &str {
 
 pub async fn get_handlers() {
     let funpointer: Vec<fn(&[u8]) -> &str> = vec![f, w];
-    let redis_call: fn(&[u8]) -> &str> = redis::interface::run;
+    let redis_call: fn(&[u8]) -> &str = redis::interface::run;
     ////let functions: Vec<fn(&[u8]) -> impl warp::Future<Output>> = vec![redis::interface::run];
     //let functions: Vec<fn(&[u8]) -> impl warp::Future<Output = &str>> = vec![redis_call];
 
