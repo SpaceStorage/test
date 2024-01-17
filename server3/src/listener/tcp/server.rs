@@ -31,6 +31,7 @@ pub async fn run(addr: String, handler: String) {
                 //println!("spawned thread has id {}, pid is {}", thread_id::get(), process::id());
                 let handler = handler.lock().unwrap().clone();
                 let ret = interface::run(&buffer_cloned[..size], &handler).await;
+                let ret = ret.as_bytes();
 
                 if let Err(e) = socket.write_all(&ret).await {
                     eprintln!("failed to write to socket; err = {:?}", e);

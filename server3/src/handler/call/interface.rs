@@ -27,7 +27,8 @@ use crate::handler::redis;
 //    BigUint,
 //};
 
-pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> &'a [u8] {
+//pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> &'a [u8] {
+pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> String {
     let newline : &[u8] = &[0x0a];
     let _res:Vec<u8> = [data, newline].concat();
 
@@ -68,13 +69,13 @@ pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> &'a [u8] {
     //}
     let _write_op = write::write(file_write_str, &data).await;
 
-    let mut ret = "";
+    let mut ret = "".to_string();
     if handler == "redis" {
         //ret = "+OK\r\n";
         ret = redis::interface::run(data).await;
     }
 
-    return ret.as_bytes();
+    return ret;
 }
 
 #[derive(Debug)]
