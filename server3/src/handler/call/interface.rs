@@ -6,6 +6,8 @@ use crate::metafs::write;
 //use crate::util::global::{GLOBAL};
 use crate::parser;
 use crate::handler::redis;
+use std::pin::Pin;
+use futures::Future;
 
 //fn print_type_of<T>(_: &T) {
 //    println!("{}", std::any::type_name::<T>())
@@ -28,7 +30,9 @@ use crate::handler::redis;
 //};
 
 //pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> &'a [u8] {
-pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> String {
+//pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> String {
+pub async fn run<'a>(data: &'a [u8], handler: &Box<dyn Fn(&'a [u8]) -> Pin<Box<dyn warp::Future<Output = std::string::String> + std::marker::Send>>>) -> String {
+//pub async fn run<'a>(data: &'a [u8], handler: &Future<Output = ()>) -> String {
     let newline : &[u8] = &[0x0a];
     let _res:Vec<u8> = [data, newline].concat();
 
@@ -70,10 +74,13 @@ pub async fn run<'a>(data: &'a [u8], handler: &'a str) -> String {
     let _write_op = write::write(file_write_str, &data).await;
 
     let mut ret = "".to_string();
-    if handler == "redis" {
-        //ret = "+OK\r\n";
-        ret = redis::interface::run(data).await;
-    }
+    handler(data).await;
+
+    //if handler == "redis" {
+    //    //ret = "+OK\r\n";
+    //    ret = redis::interface::run(data).await;
+    //}
+    //}
 
     return ret;
 }

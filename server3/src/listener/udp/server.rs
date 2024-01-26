@@ -52,7 +52,7 @@ impl Server {
 
                     let buffer_cloned = buf.clone();
                     //interface::run2(&buffer_cloned[..size]).await;
-                    interface::run(&buffer_cloned[..size], &handler).await;
+                    //interface::run(&buffer_cloned[..size], &handler).await;
             }
 
             to_send = Some(socket.recv_from(&mut buf).await.unwrap());

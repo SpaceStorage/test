@@ -1,13 +1,11 @@
 use futures::future::BoxFuture;
 use futures::FutureExt;
-use futures::Future;
-use std::pin::Pin;
+//use futures::Future;
 pub mod call;
 pub mod redis;
 
-async fn af(data: &[u8]) -> String {
-    println!("hello! {}", String::from_utf8_lossy(data));
-    "check_chpok".to_string()
+async fn stub(_data: &[u8]) -> String {
+    "".to_string()
 }
 
 async fn aw(data: &[u8]) -> String {
@@ -17,7 +15,7 @@ async fn aw(data: &[u8]) -> String {
 
 type AsyncFn = Box<dyn Fn(&[u8]) -> BoxFuture<String>>;
 
-pub async fn get_handlers() -> Vec::<AsyncFn> {
+pub fn get_handlers() -> Vec::<AsyncFn> {
     //let funpointer: Vec<Box<dyn Fn(&[u8]) -> String>> = vec![Box::new(redis::interface::run), Box::new(w)];
     //let funpointer2: Vec<Fn(&[u8]) -> String> = vec![redis::interface::run, Box::new(w)];
     //let mut fut: Vec<Box<dyn std::future::Future<Output = ()>>> = Vec::new();
@@ -28,8 +26,15 @@ pub async fn get_handlers() -> Vec::<AsyncFn> {
 
     //return functions
     let mut funpointer = Vec::<AsyncFn>::new();
+    funpointer.push(Box::new(|data| stub(data).boxed()));
     funpointer.push(Box::new(|data| redis::interface::run(data).boxed()));
-    funpointer.push(Box::new(|data| aw(data).boxed()));
 
     return funpointer
+}
+
+pub fn get_id_handler(handler: String) -> usize {
+    match handler {
+        _ if handler == "redis" => return 1,
+        _ => return 0,
+    }
 }
