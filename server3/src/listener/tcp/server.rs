@@ -18,6 +18,7 @@ pub async fn run(addr: String, handler: String) {
     let func_id = handler::get_id_handler(handler);
     let function = &handler::get_handlers()[func_id];
     print_type_of(function);
+    function("klol".as_bytes()).await;
 
     loop {
         let (mut socket, _) = listener.accept().await.unwrap();
@@ -43,6 +44,7 @@ pub async fn run(addr: String, handler: String) {
                 let function = function.clone();
                 let function = *function;
                 function("klol".as_bytes()).await;
+                //let ret = interface::run(&buffer_cloned[..size], function).await;
 
                 //let ret = ret.as_bytes();
                 let ret = "dscdc".as_bytes();
