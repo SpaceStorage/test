@@ -1,10 +1,15 @@
 use futures::future::BoxFuture;
 use futures::FutureExt;
 use std::sync::Arc;
+use crate::util::global::{GLOBAL};
 pub mod call;
 pub mod redis;
 
 async fn stub(_data: &[u8]) -> String {
+    if let Ok(slb) = GLOBAL.lock() {
+        slb.metrics_tree.handler_call.with_label_values(&["global", "stub"]).inc();
+    }
+
     "".to_string()
 }
 

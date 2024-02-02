@@ -5,23 +5,28 @@ pub struct Prometheus {
     pub access: prometheus::CounterVec,
     pub access_received_bytes: prometheus::CounterVec,
     pub response_time: prometheus::GaugeVec,
+
+    pub handler_call: prometheus::CounterVec,
 }
 
 impl Prometheus {
     pub fn new() -> Self {
         let access_opts = Opts::new("spacestorage_access", "access queries");
         let access_received_bytes_opts = Opts::new("spacestorage_received_bytes", "received bytes");
+        let handler_call_opts = Opts::new("spacestorage_handler_call", "count of calling handler");
         let response_time_opts = Opts::new("spacestorage_response_time", "response time");
         let metric_tree = Prometheus {
             r: Registry::new(),
             access: CounterVec::new(access_opts, &["namespace", "project", "operation"]).unwrap(),
-            access_received_bytes: CounterVec::new(access_received_bytes_opts, &["namespace", "project", "operation"]).unwrap(),
+            access_received_bytes: CounterVec::new(access_received_bytes_opts, &["namespace", "operation", "quantile"]).unwrap(),
+            handler_call: CounterVec::new(handler_call_opts, &["project", "handler"]).unwrap(),
             response_time: GaugeVec::new(response_time_opts, &["project", "operation", "quantile"]).unwrap(),
         };
 
         metric_tree.r.register(Box::new(metric_tree.access.clone())).unwrap();
         metric_tree.r.register(Box::new(metric_tree.access_received_bytes.clone())).unwrap();
         metric_tree.r.register(Box::new(metric_tree.response_time.clone())).unwrap();
+        metric_tree.r.register(Box::new(metric_tree.handler_call.clone())).unwrap();
 
         return metric_tree;
     }

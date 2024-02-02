@@ -41,6 +41,7 @@ pub async fn run(addr: String, handler: String) {
 
                 if let Ok(slb) = GLOBAL.lock() {
                     slb.metrics_tree.access.with_label_values(&["global", "tcp", &handler]).inc();
+                    slb.metrics_tree.access_received_bytes.with_label_values(&["global", "tcp", &handler]).inc_by(size as f64);
                 }
             }
         });
