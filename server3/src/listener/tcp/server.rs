@@ -1,9 +1,10 @@
+#![allow(unused)]
 //use tokio::net::TcpListener;
 //use tokio::io::{AsyncReadExt, AsyncWriteExt};
 ////use std::process;
 ////use thread_id;
 ////use std::sync::{Arc, Mutex};
-//use crate::util::global::{GLOBAL};
+use crate::util::global::{GLOBAL};
 //use crate::handler::call::interface;
 //use crate::handler;
 //use tokio::sync::Mutex;
@@ -109,7 +110,6 @@
 //    }
 //}
 
-#![allow(unused)]
 
 use futures::future::BoxFuture;
 use std::sync::Arc;
@@ -158,17 +158,18 @@ pub async fn run(addr: String, handler: String) {
                 };
 
                 let buffer_cloned = buf.clone();
-                function("klol".as_bytes()).await;
+                let ret = function("klol".as_bytes()).await;
+                let ret = ret.as_bytes();
 
-                let ret = "dscdc".as_bytes();
+                //let ret = "dscdc".as_bytes();
                 if let Err(e) = socket.write_all(&ret).await {
                     eprintln!("failed to write to socket; err = {:?}", e);
                     return;
                 }
 
-                //if let Ok(slb) = GLOBAL.lock() {
-                //    slb.metrics_tree.access.with_label_values(&["global", "global", "tcp"]).inc();
-                //}
+                if let Ok(slb) = GLOBAL.lock() {
+                    slb.metrics_tree.access.with_label_values(&["global", "global", "tcp"]).inc();
+                }
             }
         });
     }
