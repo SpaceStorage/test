@@ -8,12 +8,13 @@ use crate::handler;
 
 pub async fn run(addr: String, handler: String) {
     let listener = TcpListener::bind(&addr).await.unwrap();
-    let func_id = handler::get_id_handler(handler);
+    let func_id = handler::get_id_handler(handler.clone());
     let function = Arc::clone(&handler::get_handlers()[func_id]);
 
     loop {
         let (mut socket, _) = listener.accept().await.unwrap();
         let function = function.clone();
+        let handler = handler.clone();
 
         tokio::spawn(async move {
             let mut buf = [0; 1024];
@@ -30,16 +31,16 @@ pub async fn run(addr: String, handler: String) {
 
                 let buffer_cloned = buf.clone();
                 let ret = function("klol".as_bytes()).await;
+                //let ret = interface::run(&buffer_cloned[..size], function.clone()).await;
                 let ret = ret.as_bytes();
 
-                //let ret = "dscdc".as_bytes();
                 if let Err(e) = socket.write_all(&ret).await {
                     eprintln!("failed to write to socket; err = {:?}", e);
                     return;
                 }
 
                 if let Ok(slb) = GLOBAL.lock() {
-                    slb.metrics_tree.access.with_label_values(&["global", "global", "tcp"]).inc();
+                    slb.metrics_tree.access.with_label_values(&["global", "tcp", &handler]).inc();
                 }
             }
         });

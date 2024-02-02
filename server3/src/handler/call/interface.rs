@@ -8,6 +8,7 @@ use crate::parser;
 use crate::handler::redis;
 use std::pin::Pin;
 use futures::Future;
+//use std::sync::Arc;
 
 //fn print_type_of<T>(_: &T) {
 //    println!("{}", std::any::type_name::<T>())
