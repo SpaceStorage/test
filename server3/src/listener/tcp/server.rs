@@ -30,8 +30,7 @@ pub async fn run(addr: String, handler: String) {
                 };
 
                 let buffer_cloned = buf.clone();
-                let ret = function("klol".as_bytes()).await;
-                //let ret = interface::run(&buffer_cloned[..size], function.clone()).await;
+                let ret = function(&buffer_cloned[..size]).await;
                 let ret = ret.as_bytes();
 
                 if let Err(e) = socket.write_all(&ret).await {
